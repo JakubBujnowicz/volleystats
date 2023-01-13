@@ -29,7 +29,7 @@ def extract_ids(strings):
 
     expr = re.compile('(?<=id/)[0-9]+')
     rslt = np.array(list(expr.findall(s)[0] for s in strings),
-                    dtype=np.int32)
+                    dtype=np.int64)
     return rslt
 
 
@@ -39,12 +39,13 @@ def translate_positions(strings):
     """
 
     ## TODO: Replace male positions into universal using regex
-    ## TODO: Complete the libero/setter positions
     # The acronyms to be decided, it seems that there is no universally
     # accepted terminology
     pl2en = {'przyjmujący': 'OH',
              'atakujący': 'RSH',
-             'środkowy': 'MBH'}
+             'środkowy': 'MBH',
+             'libero': 'Libero',
+             'rozgrywający': 'Setter'}
 
     # Lower used due to website's inconsistency
     rslt = [pl2en[i.lower()] for i in strings]
@@ -53,9 +54,25 @@ def translate_positions(strings):
 
 # %% Players
 def fetch_players(league, season):
+    """
+    Scraps a player list for a given league and season.
+    Lower level function for a single combination of those factors,
+    accesses a corresponding website once.
+    """
+
     url = url_league(league, 'players/tour', season)
-    ## TODO: Finish, should contain IDs of all players
-    pass
+    req = requests.get(url)
+    content = req.content
+    tree = html.fromstring(content)
+
+    links = tree.cssselect('div.caption > h3 > a')
+    ids = extract_ids(list(x.get('href') for x in links))
+
+    rslt = pd.DataFrame({'League': league,
+                         'Season': season,
+                         'PlayerID': ids})
+    rslt.Season = rslt.Season.astype('Int32')
+    return rslt
 
 
 def fetch_player_info(league, season, ID):
@@ -88,6 +105,13 @@ def fetch_player_info(league, season, ID):
     metrics = list(i.text.strip() for i in metrics)
     metrics[0] = team[0].get('href')
 
+    # Sometimes data is unavailable (especially Reach for liberos),
+    # empty string crashes later functions
+    ## TODO: There must be a better, more robust way to do this
+    for index, value in enumerate(metrics):
+        if value == '':
+            metrics[index] = None
+
     info.append(name)
     info.extend(metrics)
 
@@ -112,6 +136,9 @@ def prepare_player_info(combinations):
                                        'Position', 'Height', 'Weight', 'Reach'])
     rslt.dropna(axis=0, how='all', inplace=True)
 
+    ## NOTE: Should setting correct types be here or in a lower level function?
+    ## Perhaps it's more efficient to do it here, while the other way would
+    ## be more versatile
     rslt.Season = rslt.Season.astype('Int32')
     rslt.PlayerID = rslt.PlayerID.astype('Int64')
     rslt.TeamID = extract_ids(rslt.TeamID)
@@ -125,14 +152,31 @@ def prepare_player_info(combinations):
 
 # %% Teams
 def fetch_teams(league, season):
+    """
+    Scraps a teams list for a given league and season.
+    Lower level function for a single combination of those factors,
+    accesses a corresponding website once.
+    """
+
     url = url_league(league, 'teams/tour', season)
-    ## TODO: Finish, should contain IDs of all teams
-    pass
+    req = requests.get(url)
+    content = req.content
+    tree = html.fromstring(content)
+
+    links = tree.cssselect('div.thumbnail.teamlist > a')
+    ids = extract_ids(list(x.get('href') for x in links))
+
+    rslt = pd.DataFrame({'League': league,
+                         'Season': season,
+                         'TeamID': ids})
+    rslt.Season = rslt.Season.astype('Int32')
+    return rslt
+
 
 
 def fetch_team_info(league, season, ID):
     url = url_league(league, 'teams/id', ID, 'tour', season)
-    ## TODO: Finish, consider what should be returned (name, squad, something else?)
+    ## TODO: Finish, consider what should be returned (name, roster, something else?)
     pass
 
 
@@ -145,9 +189,25 @@ def fetch_standings(league, season):
 
 # %% Matches
 def fetch_matches(league, season):
+    """
+    Scraps a matches list for a given league and season.
+    Lower level function for a single combination of those factors,
+    accesses a corresponding website once.
+    """
+
     url = url_league(league, 'games/tour', season)
-    ## TODO: Finish, should contain IDs of all matches
-    pass
+    req = requests.get(url)
+    content = req.content
+    tree = html.fromstring(content)
+
+    links = tree.cssselect('div.gameresult.clickable')
+    ids = extract_ids(list(x.get('onclick') for x in links))
+
+    rslt = pd.DataFrame({'League': league,
+                         'Season': season,
+                         'MatchID': ids})
+    rslt.Season = rslt.Season.astype('Int32')
+    return rslt
 
 
 def fetch_match_info(league, season, ID):
