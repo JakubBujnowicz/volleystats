@@ -4,6 +4,7 @@
 import importlib
 import itertools
 import pandas as pd
+import numpy as np
 
 spl = importlib.import_module('scraping.polish')
 importlib.reload(spl)
@@ -27,7 +28,10 @@ ids = [30339, 448, 27975]
 sns = list(range(season - 1, season + 1))
 combs = pd.DataFrame(itertools.product(lg, sns, ids))
 
-## TODO: The 'prepare_' prefix does not convey the difference well, different
-## one should be considered
-spl.prepare_player_info(combs)
-# spl.prepare_player_info(player_list)
+spl.batch_fetch_player_info(combs)
+# spl.batch_fetch_player_info(player_list)
+
+
+# %% Matches
+stats = spl.fetch_match_info('PlusLiga', 2022, 1102401)
+stats
