@@ -6,6 +6,7 @@ import requests
 import re
 import numpy as np
 import pandas as pd
+from datetime import datetime
 
 
 # %% Tools
@@ -35,7 +36,7 @@ def extract_ids(strings):
 
 def translate_positions(strings):
     """
-    Converts Polish position names into english equivalents.
+    Converts Polish position names into English equivalents.
     """
 
     # TODO: Replace male positions into universal using regex
@@ -48,11 +49,37 @@ def translate_positions(strings):
              'rozgrywający': 'Setter'}
 
     # Lower used due to website's inconsistency
-    rslt = [pl2en[i.lower()] for i in strings]
+    rslt = list(pl2en[i.lower()] for i in strings)
+    return rslt
+
+
+def translate_terms(strings):
+    """
+    Converts Polish terms into English equivalents.
+    """
+
+    pl2en = {'Faza': 'Stage',
+             'Termin': 'Round',
+             'Numer meczu': 'MatchNumber',
+             'MVP': 'MVP',
+             'Liczba widzów': 'Spectators',
+             'Sędzia pierwszy': 'FirstReferee',
+             'Sędzia drugi': 'SecondReferee',
+             'Komisarz': 'Commissioner',
+             'Nazwa': 'Arena',
+             'Adres': 'Address',
+             'Miasto': 'City',
+             'Liczba miejsc siedzących w hali': 'ArenaSize'}
+
+    rslt = list(pl2en[i] for i in strings)
     return rslt
 
 
 def perc2count(perc, total):
+    """
+    Infers an integer value from total * perc / 100.
+    """
+
     perc = pd.Series(list(x[:-1] for x in perc))
     perc[perc == ''] = 0
     perc = np.array(perc, dtype=np.float64) / 100
@@ -138,6 +165,7 @@ def batch_fetch_player_info(combinations):
     """
     # TODO: The interface should be reviewed here, simply a draft below
     # Maybe it can be done a little bit smarter
+    combinations = combinations.loc[:, ['League', 'Season', 'PlayerID']]
     rslt = list(fetch_player_info(*x) for x in combinations.values)
 
     rslt = pd.DataFrame(rslt, columns=['League', 'Season', 'PlayerID',
@@ -218,7 +246,7 @@ def fetch_matches(league, season):
     return rslt
 
 
-def parse_stats_table(tab):
+def _parse_stats_table(tab):
     player_ids = list(a.get('href')
                       for a in tab.cssselect('th.min-responsive > a'))
 
@@ -239,6 +267,30 @@ def parse_stats_table(tab):
     return rslt
 
 
+def _parse_details_table(tab):
+    labels = tab.cssselect('td')
+    labels = list(x.text[:-1] for x in labels if x.text is not None)
+    labels = translate_terms(labels)
+
+    values = tab.cssselect('td > span')
+    values = list(x.text for x in values)
+
+    rslt = dict(zip(labels, values))
+    if 'MVP' in labels:
+        rslt['MVP'] = extract_ids([tab.cssselect('a')[0].get('href')])
+    # TODO: Name of Stage should be translated
+
+    rslt = pd.DataFrame([rslt])
+    types = {'Round': np.int32,
+             'MatchNumber': np.int32,
+             'MVP': np.int64,
+             'Spectators': np.int32,
+             'ArenaSize': np.int32}
+    rslt = rslt.astype({k: v for k, v in types.items() if k in rslt.columns})
+
+    return rslt
+
+
 def fetch_match_info(league, season, ID):
     # TODO: Finish, consider what should be returned (teams, result, time,
     # place, something else?)
@@ -249,48 +301,104 @@ def fetch_match_info(league, season, ID):
     content = req.content
     tree = html.fromstring(content)
 
+    ids = pd.DataFrame([{'League': league,
+                         'Season': season,
+                         'MatchID': ID}])
+    ids = ids.astype({'Season': np.int32,
+                      'MatchID': np.int64})
+
+    # Information -------------------------------------------------------------
+    teams = tree.cssselect('div.col-xs-4.col-sm-3.tablecell > h2 > a')
+    teams = list(x.get('href') for x in teams)
+    teams = extract_ids(teams)
+    teams = pd.DataFrame(teams.reshape(1, 2),
+                         columns=['Home', 'Away'])
+
+    date = tree.cssselect('div.col-xs-4.col-sm-2.tablecell > div.date.khanded')
+    date = datetime.strptime(date[0].text.strip(),
+                             '%d.%m.%Y, %H:%M')
+    date = np.datetime64(date)
+
+    details = tree.cssselect('div.col-sm-6.col-md-5 > table')
+    place = tree.cssselect('div.pagecontent > table.right-left.spacced')
+    details = list(_parse_details_table(tab) for tab in details + place)
+    details = pd.concat(details, axis=1)
+
+    # Add previous info
+    details.insert(loc=0, column='Date', value=date)
+    details = pd.concat([ids, teams, details], axis=1)
+
     # Statistics --------------------------------------------------------------
     stat_tabs = tree.cssselect('table.rs-standings-table > tbody')
 
-    stats = pd.concat(list(parse_stats_table(tab) for tab in stat_tabs))
-    stats.reset_index(drop=True, inplace=True)
-    stats.insert(loc=0,
-                 column='MatchID',
-                 value=ID)
+    if len(stat_tabs) != 0:
+        stats = pd.concat(list(_parse_stats_table(tab) for tab in stat_tabs),
+                          ignore_index=True)
+        stats.insert(loc=0,
+                     column='MatchID',
+                     value=ID)
 
-    # Change column types
-    stats = stats.astype({'MatchID': np.int64,
-                          'Points': np.int32,
-                          'BreakPoints': np.int32,
-                          'PointsRatio': np.int32,
-                          'ServeTotal': np.int32,
-                          'ServeErrors': np.int32,
-                          'ServeAces': np.int32,
-                          'ReceptionTotal': np.int32,
-                          'ReceptionErrors': np.int32,
-                          'AttackTotal': np.int32,
-                          'AttackBlocked': np.int32,
-                          'AttackErrors': np.int32,
-                          'AttackKills': np.int32,
-                          'BlockPoints': np.int32,
-                          'BlockAssists': np.int32})
-    stats.PlayerID = extract_ids(stats.PlayerID)
-    stats.insert(loc=int(np.argmax(stats.columns == 'ServeEff')),
-                  column='ServeSlashes',
-                  value=perc2count(perc=stats.ServeEff, total=stats.ServeTotal) -
-                      stats.ServeAces + stats.ServeErrors)
-    stats.insert(loc=int(np.argmax(stats.columns == 'ReceptionPosPerc')),
-                  column='ReceptionPositive',
-                  value=perc2count(perc=stats.ReceptionPosPerc,
-                                   total=stats.ReceptionTotal))
-    stats.insert(loc=int(np.argmax(stats.columns == 'ReceptionPerfPerc')),
-                  column='ReceptionPerfect',
-                  value=perc2count(perc=stats.ReceptionPerfPerc,
-                                   total=stats.ReceptionTotal))
+        # Change column types
+        stats = stats.astype({'MatchID': np.int64,
+                              'Points': np.int32,
+                              'BreakPoints': np.int32,
+                              'PointsRatio': np.int32,
+                              'ServeTotal': np.int32,
+                              'ServeErrors': np.int32,
+                              'ServeAces': np.int32,
+                              'ReceptionTotal': np.int32,
+                              'ReceptionErrors': np.int32,
+                              'AttackTotal': np.int32,
+                              'AttackBlocked': np.int32,
+                              'AttackErrors': np.int32,
+                              'AttackKills': np.int32,
+                              'BlockPoints': np.int32,
+                              'BlockAssists': np.int32})
+        stats.PlayerID = extract_ids(stats.PlayerID)
+        stats.insert(loc=int(np.argmax(stats.columns == 'ServeEff')),
+                     column='ServeSlashes',
+                     value=perc2count(perc=stats.ServeEff, total=stats.ServeTotal) -
+                     stats.ServeAces + stats.ServeErrors)
+        stats.insert(loc=int(np.argmax(stats.columns == 'ReceptionPosPerc')),
+                     column='ReceptionPositive',
+                     value=perc2count(perc=stats.ReceptionPosPerc,
+                                      total=stats.ReceptionTotal))
+        stats.insert(loc=int(np.argmax(stats.columns == 'ReceptionPerfPerc')),
+                     column='ReceptionPerfect',
+                     value=perc2count(perc=stats.ReceptionPerfPerc,
+                                      total=stats.ReceptionTotal))
 
-    # Drop unnecessary columns (functions of other variables)
-    stats.drop(columns=['ServeEff', 'ReceptionPosPerc', 'ReceptionPerfPerc',
-                        'AttackKillPerc', 'AttackEff'],
-               inplace=True)
+        # Drop unnecessary columns (functions of other variables)
+        stats.drop(columns=['ServeEff', 'ReceptionPosPerc', 'ReceptionPerfPerc',
+                            'AttackKillPerc', 'AttackEff'],
+                   inplace=True)
 
-    return stats
+    else:
+        stats = None
+
+    # Results -----------------------------------------------------------------
+    ## TODO: Add results from every set
+
+
+    # Return values -----------------------------------------------------------
+    rslt = {'information': details,
+            'stats': stats}
+
+    return rslt
+
+
+def batch_fetch_match_info(combinations):
+    """
+    Runs a lower level function for all combinations and concatenates DataFrames.
+    """
+    # TODO: The interface should be reviewed here, simply a draft below
+    # Maybe it can be done a little bit smarter
+    combinations = combinations.loc[:, ['League', 'Season', 'MatchID']]
+    data = list(fetch_match_info(*x) for x in combinations.values)
+
+    rslt = dict()
+    for key in data[0].keys():
+       rslt[key] = pd.concat(list(x[key] for x in data),
+                             ignore_index=True)
+
+    return rslt

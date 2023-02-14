@@ -26,12 +26,18 @@ spl.fetch_player_info('PlusLiga', 2022, 2104197)
 lg = [league]
 ids = [30339, 448, 27975]
 sns = list(range(season - 1, season + 1))
-combs = pd.DataFrame(itertools.product(lg, sns, ids))
+combs = pd.DataFrame(itertools.product(lg, sns, ids),
+                     columns=['League', 'Season', 'PlayerID'])
 
 spl.batch_fetch_player_info(combs)
 # spl.batch_fetch_player_info(player_list)
 
 
 # %% Matches
-stats = spl.fetch_match_info('PlusLiga', 2022, 1102401)
-stats
+spl.fetch_match_info('PlusLiga', 2022, 1102401)
+
+## TODO: Bugs for 0, 100
+combs = match_list.iloc[[200, 300, 400], :]
+matches = spl.batch_fetch_match_info(combs)
+info = matches['information']
+stats = matches['stats']
