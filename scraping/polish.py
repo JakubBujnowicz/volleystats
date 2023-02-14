@@ -282,7 +282,7 @@ def _parse_details_table(tab):
 
     rslt = pd.DataFrame([rslt])
     types = {'Round': np.int32,
-             'MatchNumber': np.int32,
+             # 'MatchNumber': np.int32, (Matches are number using letters in playoffs)
              'MVP': np.int64,
              'Spectators': np.int32,
              'ArenaSize': np.int32}
@@ -334,13 +334,11 @@ def fetch_match_info(league, season, ID):
     if len(stat_tabs) != 0:
         stats = pd.concat(list(_parse_stats_table(tab) for tab in stat_tabs),
                           ignore_index=True)
-        stats.insert(loc=0,
-                     column='MatchID',
-                     value=ID)
+        stat_ids = ids.loc[ids.index.repeat(len(stats))].reset_index(drop=True)
+        stats = pd.concat([stat_ids, stats], axis=1)
 
         # Change column types
-        stats = stats.astype({'MatchID': np.int64,
-                              'Points': np.int32,
+        stats = stats.astype({'Points': np.int32,
                               'BreakPoints': np.int32,
                               'PointsRatio': np.int32,
                               'ServeTotal': np.int32,

@@ -7,8 +7,7 @@ import pandas as pd
 import numpy as np
 
 spl = importlib.import_module('scraping.polish')
-importlib.reload(spl)
-
+# importlib.reload(spl)
 league = 'PlusLiga'
 season = 2021
 
@@ -36,8 +35,8 @@ spl.batch_fetch_player_info(combs)
 # %% Matches
 spl.fetch_match_info('PlusLiga', 2022, 1102401)
 
-## TODO: Bugs for 0, 100
-combs = match_list.iloc[[200, 300, 400], :]
+# importlib.reload(spl)
+combs = match_list.iloc[[0, 100, 200, 300, 400], :]
 matches = spl.batch_fetch_match_info(combs)
 info = matches['information']
 stats = matches['stats']
