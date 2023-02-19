@@ -172,15 +172,18 @@ def batch_fetch_player_info(combinations):
                                        'PlayerName', 'TeamID', 'DateOfBirth',
                                        'Position', 'Height', 'Weight', 'Reach'])
     rslt.dropna(axis=0, how='all', inplace=True)
+    rslt.reset_index(drop=True, inplace=True)
 
     # NOTE: Should setting correct types be here or in a lower level function?
     # Perhaps it's more efficient to do it here, while the other way would
     # be more versatile
     rslt = rslt.astype({'Season': np.int32,
-                        'PlayerID': np.in64,
-                        'Height': np.int32,
-                        'Weight': np.int32,
-                        'Reach': np.int32})
+                        'PlayerID': np.int64,
+                        ## TODO: Floats below due to possible missings,
+                        ## perhaps this could be improved
+                        'Height': np.float32,
+                        'Weight': np.float32,
+                        'Reach': np.float32})
     rslt.TeamID = extract_ids(rslt.TeamID)
     rslt.DateOfBirth = pd.to_datetime(rslt.DateOfBirth, format='%d.%m.%Y')
     rslt.Position = translate_positions(rslt.Position)

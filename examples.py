@@ -7,7 +7,9 @@ import pandas as pd
 import numpy as np
 
 spl = importlib.import_module('scraping.polish')
+st = importlib.import_module('stats')
 # importlib.reload(spl)
+
 league = 'PlusLiga'
 season = 2021
 
@@ -29,7 +31,7 @@ combs = pd.DataFrame(itertools.product(lg, sns, ids),
                      columns=['League', 'Season', 'PlayerID'])
 
 spl.batch_fetch_player_info(combs)
-# spl.batch_fetch_player_info(player_list)
+player_info = spl.batch_fetch_player_info(player_list)
 
 
 # %% Matches
