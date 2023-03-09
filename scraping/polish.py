@@ -39,17 +39,17 @@ def translate_positions(strings):
     Converts Polish position names into English equivalents.
     """
 
-    # TODO: Replace male positions into universal using regex
-    # The acronyms to be decided, it seems that there is no universally
+    # Last letter removed to avoid gender issues
+    pl2en = {'przyjmując': 'OH',
+             'atakując': 'RSH',
+             'środkow': 'MBH',
+             'liber': 'Libero',
+             'rozgrywając': 'Setter'}
+    # TODO: The acronyms to be decided, it seems that there is no universally
     # accepted terminology
-    pl2en = {'przyjmujący': 'OH',
-             'atakujący': 'RSH',
-             'środkowy': 'MBH',
-             'libero': 'Libero',
-             'rozgrywający': 'Setter'}
 
     # Lower used due to website's inconsistency
-    rslt = list(pl2en[i.lower()] for i in strings)
+    rslt = list(pl2en[i[:-1].lower()] for i in strings)
     return rslt
 
 
