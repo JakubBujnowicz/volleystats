@@ -65,13 +65,20 @@ def translate_terms(strings):
              'Liczba widzów': 'Spectators',
              'Sędzia pierwszy': 'FirstReferee',
              'Sędzia drugi': 'SecondReferee',
+             # TODO: Other translation should be considered
+             'Kwalifikator': 'InspectorReferee',
              'Komisarz': 'Commissioner',
              'Nazwa': 'Arena',
              'Adres': 'Address',
              'Miasto': 'City',
-             'Liczba miejsc siedzących w hali': 'ArenaSize'}
+             'Liczba miejsc siedzących w hali': 'ArenaSize',
+             'zasadnicza': 'main'}
 
-    rslt = list(pl2en[i] for i in strings)
+    if isinstance(strings, list):
+        rslt = list(pl2en[i] for i in strings)
+    elif isinstance(strings, pd.core.series.Series):
+        rslt = strings.replace(pl2en)
+
     return rslt
 
 
@@ -256,6 +263,7 @@ def _parse_stats_table(tab):
     rows = tab.cssselect('tr')
     values = list(list(val.text for val in rows[i].cssselect('td'))
                   for i in range(len(rows) - 1))  # Last row is skipped as it is a total
+
     rslt = pd.DataFrame(values,
                         columns=['SetI', 'SetII', 'SetIII', 'SetIV', 'SetV',
                                  'Points', 'BreakPoints', 'PointsRatio',
@@ -281,7 +289,6 @@ def _parse_details_table(tab):
     rslt = dict(zip(labels, values))
     if 'MVP' in labels:
         rslt['MVP'] = extract_ids([tab.cssselect('a')[0].get('href')])
-    # TODO: Name of Stage should be translated
 
     rslt = pd.DataFrame([rslt])
     types = {'Round': np.int32,
@@ -290,6 +297,9 @@ def _parse_details_table(tab):
              'Spectators': np.int32,
              'ArenaSize': np.int32}
     rslt = rslt.astype({k: v for k, v in types.items() if k in rslt.columns})
+
+    if 'Stage' in rslt.columns:
+        rslt.Stage = translate_terms(rslt.Stage)
 
     return rslt
 
