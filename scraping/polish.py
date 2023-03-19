@@ -257,22 +257,42 @@ def fetch_matches(league, season):
 
 
 def _parse_stats_table(tab):
-    player_ids = list(a.get('href')
-                      for a in tab.cssselect('th.min-responsive > a'))
+    head = tab.cssselect('thead')[0]
+    body = tab.cssselect('tbody')[0]
 
-    rows = tab.cssselect('tr')
+    # Get PlayerIDs
+    player_ids = list(a.get('href')
+                      for a in body.cssselect('th.min-responsive > a'))
+
+    # Get header row with column names
+    # Second row chosen, as first are pasted column names
+    header_cols = head.cssselect('tr')[1]
+    header_cols = list(row.text for row in header_cols.cssselect('th'))
+
+    # Get contents of the table
+    rows = body.cssselect('tr')
     values = list(list(val.text for val in rows[i].cssselect('td'))
                   for i in range(len(rows) - 1))  # Last row is skipped as it is a total
 
+    # Prepare table headers
+    set_cols = ['SetI', 'SetII', 'SetIII', 'SetIV', 'SetV']
+    other_cols = ['Points', 'BreakPoints', 'PointsRatio',
+                  'ServeTotal', 'ServeErrors', 'ServeAces', 'ServeEff',
+                  'ReceptionTotal', 'ReceptionErrors',
+                  'ReceptionPosPerc', 'ReceptionPerfPerc',
+                  'AttackTotal', 'AttackBlocked', 'AttackErrors',
+                  'AttackKills', 'AttackKillPerc', 'AttackEff',
+                  'BlockPoints', 'BlockAssists']
+
+    # Adjust set_cols if golden set is included
+    if 'GS' in header_cols:
+        set_cols.append('SetGolden')
+
+    # Final list of column names
+    all_cols = set_cols + other_cols
+
     rslt = pd.DataFrame(values,
-                        columns=['SetI', 'SetII', 'SetIII', 'SetIV', 'SetV',
-                                 'Points', 'BreakPoints', 'PointsRatio',
-                                 'ServeTotal', 'ServeErrors', 'ServeAces', 'ServeEff',
-                                 'ReceptionTotal', 'ReceptionErrors',
-                                 'ReceptionPosPerc', 'ReceptionPerfPerc',
-                                 'AttackTotal', 'AttackBlocked', 'AttackErrors',
-                                 'AttackKills', 'AttackKillPerc', 'AttackEff',
-                                 'BlockPoints', 'BlockAssists'])
+                        columns=all_cols)
     rslt.insert(loc=0, column='PlayerID', value=player_ids)
 
     return rslt
@@ -342,7 +362,7 @@ def fetch_match_info(league, season, ID):
     details = pd.concat([ids, teams, details], axis=1)
 
     # Statistics --------------------------------------------------------------
-    stat_tabs = tree.cssselect('table.rs-standings-table > tbody')
+    stat_tabs = tree.cssselect('table.rs-standings-table')
 
     if len(stat_tabs) != 0:
         stats = pd.concat(list(_parse_stats_table(tab) for tab in stat_tabs),
