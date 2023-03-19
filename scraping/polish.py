@@ -253,6 +253,10 @@ def fetch_matches(league, season):
                          'Season': season,
                          'MatchID': ids})
     rslt.Season = rslt.Season.astype(np.int32)
+
+    # Dropping duplicated matches
+    rslt = rslt.drop_duplicates()
+
     return rslt
 
 
