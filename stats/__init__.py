@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 def attack_eff(kills, errors, blocked, total):
-    return (kill - errors - blocked) / total
+    return (kills - errors - blocked) / total
 
 def serve_eff(aces, slashes, errors, total,
               slash_mult=1):
