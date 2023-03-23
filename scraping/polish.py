@@ -297,7 +297,7 @@ def fetch_matches(league, season):
     return rslt
 
 
-def _parse_stats_table(tab):
+def _parse_stats_table(tab, season):
     head = tab.cssselect('thead')[0]
     body = tab.cssselect('tbody')[0]
 
@@ -317,13 +317,31 @@ def _parse_stats_table(tab):
 
     # Prepare table headers
     set_cols = ['SetI', 'SetII', 'SetIII', 'SetIV', 'SetV']
-    other_cols = ['Points', 'BreakPoints', 'PointsRatio',
-                  'ServeTotal', 'ServeErrors', 'ServeAces', 'ServeEff',
-                  'ReceptionTotal', 'ReceptionErrors',
-                  'ReceptionPosPerc', 'ReceptionPerfPerc',
-                  'AttackTotal', 'AttackBlocked', 'AttackErrors',
-                  'AttackKills', 'AttackKillPerc', 'AttackEff',
-                  'BlockPoints', 'BlockAssists']
+
+    # Choose columns according to old or new format
+    if season >= 2008 and season <= 2019:
+        old_format = True
+        other_cols = ['Points',
+                      'ServeTotal', 'ServeAces', 'ServeErrors', 'AcesSet',
+                      'ReceptionTotal', 'ReceptionErrors', 'ReceptionNegative',
+                      'ReceptionPositive', 'ReceptionPosPerc',
+                      'ReceptionPerfect', 'ReceptionPerfPerc',
+                      'AttackTotal', 'AttackErrors', 'AttackBlocked',
+                      'AttackKills', 'AttackKillPerc',
+                      'BlockPoints', 'BlocksSet']
+
+    elif season >= 2020:
+        old_format = False
+        other_cols = ['Points', 'BreakPoints', 'PointsRatio',
+                      'ServeTotal', 'ServeErrors', 'ServeAces', 'ServeEff',
+                      'ReceptionTotal', 'ReceptionErrors',
+                      'ReceptionPosPerc', 'ReceptionPerfPerc',
+                      'AttackTotal', 'AttackBlocked', 'AttackErrors',
+                      'AttackKills', 'AttackKillPerc', 'AttackEff',
+                      'BlockPoints', 'BlockAssists']
+
+    else:
+        return None
 
     # Adjust set_cols if golden set is included
     if 'GS' in header_cols:
@@ -332,9 +350,59 @@ def _parse_stats_table(tab):
     # Final list of column names
     all_cols = set_cols + other_cols
 
+    # Prepare a data frame
     rslt = pd.DataFrame(values,
                         columns=all_cols)
     rslt.insert(loc=0, column='PlayerID', value=player_ids)
+
+    # Change column types
+    rslt.PlayerID = extract_ids(rslt.PlayerID)
+    rslt = rslt.astype({'Points': np.int32,
+                        'ServeTotal': np.int32,
+                        'ServeErrors': np.int32,
+                        'ServeAces': np.int32,
+                        'ReceptionTotal': np.int32,
+                        'ReceptionErrors': np.int32,
+                        'AttackTotal': np.int32,
+                        'AttackBlocked': np.int32,
+                        'AttackErrors': np.int32,
+                        'AttackKills': np.int32,
+                        'BlockPoints': np.int32})
+
+    if old_format:
+        rslt = rslt.astype({'ReceptionNegative': np.int32,
+                            'ReceptionPositive': np.int32,
+                            'ReceptionPerfect': np.int32})
+
+        # Drop unnecessary columns (functions of other variables)
+        rslt = rslt.drop(columns=['AcesSet', 'ReceptionPosPerc',
+                                  'ReceptionPerfPerc', 'AttackKillPerc',
+                                  'BlocksSet'])
+
+    else:
+        rslt = rslt.astype({'BreakPoints': np.int32,
+                            'PointsRatio': np.int32,
+                            'BlockAssists': np.int32})
+
+        rslt.insert(loc=int(np.argmax(rslt.columns == 'ServeEff')),
+                    column='ServeSlashes',
+                    value=perc2count(perc=rslt.ServeEff,
+                                     total=rslt.ServeTotal) -
+                        rslt.ServeAces +
+                        rslt.ServeErrors)
+        rslt.insert(loc=int(np.argmax(rslt.columns == 'ReceptionPosPerc')),
+                    column='ReceptionPositive',
+                    value=perc2count(perc=rslt.ReceptionPosPerc,
+                                     total=rslt.ReceptionTotal))
+        rslt.insert(loc=int(np.argmax(rslt.columns == 'ReceptionPerfPerc')),
+                    column='ReceptionPerfect',
+                    value=perc2count(perc=rslt.ReceptionPerfPerc,
+                                     total=rslt.ReceptionTotal))
+
+        # Drop unnecessary columns (functions of other variables)
+        rslt = rslt.drop(columns=['ServeEff', 'ReceptionPosPerc',
+                                  'ReceptionPerfPerc',
+                                  'AttackKillPerc', 'AttackEff'])
 
     return rslt
 
@@ -421,43 +489,10 @@ def fetch_match_info(league, season, ID):
     stat_tabs = tree.cssselect('table.rs-standings-table')
 
     if len(stat_tabs) != 0:
-        stats = pd.concat(list(_parse_stats_table(tab) for tab in stat_tabs),
+        stats = pd.concat(list(_parse_stats_table(tab, season=season)
+                               for tab in stat_tabs),
                           ignore_index=True)
         stats = vsu.df_colattach1(ids, stats)
-
-        # Change column types
-        stats = stats.astype({'Points': np.int32,
-                              'BreakPoints': np.int32,
-                              'PointsRatio': np.int32,
-                              'ServeTotal': np.int32,
-                              'ServeErrors': np.int32,
-                              'ServeAces': np.int32,
-                              'ReceptionTotal': np.int32,
-                              'ReceptionErrors': np.int32,
-                              'AttackTotal': np.int32,
-                              'AttackBlocked': np.int32,
-                              'AttackErrors': np.int32,
-                              'AttackKills': np.int32,
-                              'BlockPoints': np.int32,
-                              'BlockAssists': np.int32})
-        stats.PlayerID = extract_ids(stats.PlayerID)
-        stats.insert(loc=int(np.argmax(stats.columns == 'ServeEff')),
-                     column='ServeSlashes',
-                     value=perc2count(perc=stats.ServeEff, total=stats.ServeTotal) -
-                     stats.ServeAces + stats.ServeErrors)
-        stats.insert(loc=int(np.argmax(stats.columns == 'ReceptionPosPerc')),
-                     column='ReceptionPositive',
-                     value=perc2count(perc=stats.ReceptionPosPerc,
-                                      total=stats.ReceptionTotal))
-        stats.insert(loc=int(np.argmax(stats.columns == 'ReceptionPerfPerc')),
-                     column='ReceptionPerfect',
-                     value=perc2count(perc=stats.ReceptionPerfPerc,
-                                      total=stats.ReceptionTotal))
-
-        # Drop unnecessary columns (functions of other variables)
-        stats.drop(columns=['ServeEff', 'ReceptionPosPerc', 'ReceptionPerfPerc',
-                            'AttackKillPerc', 'AttackEff'],
-                   inplace=True)
 
     else:
         stats = None
@@ -466,7 +501,6 @@ def fetch_match_info(league, season, ID):
     rslt_tab = tree.cssselect('table#gameScore_' + str(ID))[0]
     results = _parse_results_table(rslt_tab)
     results = vsu.df_colattach1(ids, results)
-
 
     # Return values -----------------------------------------------------------
     rslt = {'information': details,

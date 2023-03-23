@@ -45,4 +45,4 @@ stats = matches['stats']
 
 
 # %% Teams
-spl.fetch_team_info('PlusLiga', 2022, 30288)
+test = spl.fetch_team_info('PlusLiga', 2022, 30288)
