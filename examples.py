@@ -11,7 +11,7 @@ st = importlib.import_module('stats')
 # importlib.reload(spl)
 
 league = 'PlusLiga'
-season = 2021
+season = 2022
 
 
 # %% Lists
@@ -38,7 +38,11 @@ player_info = spl.batch_fetch_player_info(player_list)
 spl.fetch_match_info('PlusLiga', 2022, 1102401)
 
 # importlib.reload(spl)
-combs = match_list.iloc[[0, 100, 200, 300, 400], :]
+combs = match_list
 matches = spl.batch_fetch_match_info(combs)
 info = matches['information']
 stats = matches['stats']
+
+
+# %% Teams
+spl.fetch_team_info('PlusLiga', 2022, 30288)

@@ -6,6 +6,7 @@ import requests
 import re
 import numpy as np
 import pandas as pd
+import vsutils as vsu
 from datetime import datetime
 
 
@@ -220,10 +221,46 @@ def fetch_teams(league, season):
     return rslt
 
 
+def _parse_teaminfo_table(tab):
+    ## TODO: Finish, does not work at the moment
+    pars = tab.cssselect('p')
+    texts = list(''.join(par.itertext()) for par in pars)
+    texts = list(re.split(pattern=r'[\n\t\r]+', string=txt) for txt in texts)
+
+    return None
+
+
 def fetch_team_info(league, season, ID):
     url = url_league(league, 'teams/id', ID, 'tour', season)
     # TODO: Finish, consider what should be returned (name, roster, something else?)
-    pass
+
+    req = requests.get(url)
+    content = req.content
+    tree = html.fromstring(content)
+
+    ids = pd.DataFrame([{'League': league,
+                         'Season': season,
+                         'TeamID': ID}])
+    ids = ids.astype({'Season': np.int32,
+                      'TeamID': np.int64})
+
+    # Roster ------------------------------------------------------------------
+    players = tree.cssselect('div.player-item.to-filter.cut-paste > a')
+    players = extract_ids(list(p.get('href') for p in players))
+    players = pd.DataFrame(players, columns=['PlayerID'])
+    players = vsu.df_colattach1(ids, players)
+
+
+    # Information -------------------------------------------------------------
+    ## TODO: Finish this
+    info = tree.cssselect('div.col-sm-12 > div.pagecontent > div.row')[0]
+    info = _parse_teaminfo_table(info)
+
+    # Return values -----------------------------------------------------------
+    rslt = {'roster': players,
+            'info': info}
+
+    return rslt
 
 
 # %% Standings
@@ -386,8 +423,7 @@ def fetch_match_info(league, season, ID):
     if len(stat_tabs) != 0:
         stats = pd.concat(list(_parse_stats_table(tab) for tab in stat_tabs),
                           ignore_index=True)
-        stat_ids = ids.loc[ids.index.repeat(len(stats))].reset_index(drop=True)
-        stats = pd.concat([stat_ids, stats], axis=1)
+        stats = vsu.df_colattach1(ids, stats)
 
         # Change column types
         stats = stats.astype({'Points': np.int32,
@@ -429,10 +465,7 @@ def fetch_match_info(league, season, ID):
     # Results -----------------------------------------------------------------
     rslt_tab = tree.cssselect('table#gameScore_' + str(ID))[0]
     results = _parse_results_table(rslt_tab)
-
-    # Add IDs
-    rslt_ids = ids.loc[ids.index.repeat(len(results))].reset_index(drop=True)
-    results = pd.concat([rslt_ids, results], axis=1)
+    results = vsu.df_colattach1(ids, results)
 
 
     # Return values -----------------------------------------------------------
