@@ -328,6 +328,21 @@ def _parse_details_table(tab):
     return rslt
 
 
+def _parse_results_table(tab):
+    rows = tab.cssselect('tr')
+
+    # Discard first (headers) and last (total)
+    rows = rows[1:(len(rows) - 1)]
+    values = list([x.text for x in row] for row in rows)
+    rslt = pd.DataFrame(values, columns=['Set', 'Time', 'Points', 'Result'])
+
+    # Fix the set number
+    n = rslt.shape[0]
+    rslt.Set = np.arange(n) + 1
+
+    return rslt
+
+
 def fetch_match_info(league, season, ID):
     # TODO: Finish, consider what should be returned (teams, result, time,
     # place, something else?)
@@ -412,11 +427,17 @@ def fetch_match_info(league, season, ID):
         stats = None
 
     # Results -----------------------------------------------------------------
-    ## TODO: Add results from every set
+    rslt_tab = tree.cssselect('table#gameScore_' + str(ID))[0]
+    results = _parse_results_table(rslt_tab)
+
+    # Add IDs
+    rslt_ids = ids.loc[ids.index.repeat(len(results))].reset_index(drop=True)
+    results = pd.concat([rslt_ids, results], axis=1)
 
 
     # Return values -----------------------------------------------------------
     rslt = {'information': details,
+            'results': results,
             'stats': stats}
 
     return rslt

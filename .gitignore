@@ -1,5 +1,6 @@
 # User defined
 .directory
+debug_script.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
