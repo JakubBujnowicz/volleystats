@@ -261,8 +261,25 @@ def fetch_team_info(league, season, ID):
     info['TeamName'] = team_name.text
 
     # Return values -----------------------------------------------------------
-    rslt = {'roster': players,
-            'info': info}
+    rslt = {'information': info,
+            'roster': players}
+
+    return rslt
+
+
+def batch_fetch_team_info(combinations):
+    """
+    Runs a lower level function for all combinations and concatenates DataFrames.
+    """
+    # TODO: The interface should be reviewed here, simply a draft below
+    # Maybe it can be done a little bit smarter
+    combinations = combinations.loc[:, ['League', 'Season', 'TeamID']]
+    data = list(fetch_team_info(*x) for x in combinations.values)
+
+    rslt = dict()
+    for key in data[0].keys():
+       rslt[key] = pd.concat(list(x[key] for x in data),
+                             ignore_index=True)
 
     return rslt
 
