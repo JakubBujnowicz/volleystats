@@ -30,8 +30,12 @@ def extract_ids(strings):
     """
 
     expr = re.compile('(?<=id/)[0-9]+')
-    rslt = np.array(list(expr.findall(s)[0] for s in strings),
-                    dtype=np.int64)
+
+    rslt = list()
+    for s in strings:
+        rslt.extend(expr.findall(s))
+
+    rslt = np.array(rslt, dtype=np.int64)
     return rslt
 
 
@@ -489,39 +493,54 @@ def fetch_match_info(league, season, ID):
     teams = tree.cssselect('div.col-xs-4.col-sm-3.tablecell > h2 > a')
     teams = list(x.get('href') for x in teams)
     teams = extract_ids(teams)
+
+    # If there was no ID to extract (i.e. it is not yet known who will play),
+    # provide fake IDs
+    ## TODO: Make this more robust
+    if len(teams) == 0:
+        teams = np.array([0, 0], dtype=np.int64)
+
     teams = pd.DataFrame(teams.reshape(1, 2),
                          columns=['Home', 'Away'])
 
     date = tree.cssselect('div.col-xs-4.col-sm-2.tablecell > div.date.khanded')
-    date = datetime.strptime(date[0].text.strip(),
-                             '%d.%m.%Y, %H:%M')
+    date = date[0].text.strip()
+    ## TODO: Make this more robust
+    if len(date) == (10 + 2 + 5):
+        date = datetime.strptime(date, '%d.%m.%Y, %H:%M')
+    else:
+        date = datetime.strptime(date, '%d.%m.%Y')
     date = np.datetime64(date)
 
     details = tree.cssselect('div.col-sm-6.col-md-5 > table')
     place = tree.cssselect('div.pagecontent > table.right-left.spacced')
     details = list(_parse_details_table(tab) for tab in details + place)
-    details = pd.concat(details, axis=1)
+    if len(details) > 0:
+        details = pd.concat(details, axis=1)
+        details.insert(loc=0, column='Date', value=date)
+    else:
+        details = pd.DataFrame([date], columns=['Date'])
 
-    # Add previous info
-    details.insert(loc=0, column='Date', value=date)
     details = pd.concat([ids, teams, details], axis=1)
 
     # Statistics --------------------------------------------------------------
     stat_tabs = tree.cssselect('table.rs-standings-table')
 
-    if len(stat_tabs) != 0:
+    if len(stat_tabs) > 0:
         stats = pd.concat(list(_parse_stats_table(tab, season=season)
                                for tab in stat_tabs),
                           ignore_index=True)
         stats = vsu.df_colattach1(ids, stats)
-
     else:
-        stats = None
+        stats = []
 
     # Results -----------------------------------------------------------------
-    rslt_tab = tree.cssselect('table#gameScore_' + str(ID))[0]
-    results = _parse_results_table(rslt_tab)
-    results = vsu.df_colattach1(ids, results)
+    rslt_tab = tree.cssselect('table#gameScore_' + str(ID))
+    if len(rslt_tab) > 0:
+        results = _parse_results_table(rslt_tab[0])
+        results = vsu.df_colattach1(ids, results)
+    else:
+        results = []
 
     # Return values -----------------------------------------------------------
     rslt = {'information': details,
@@ -542,7 +561,8 @@ def batch_fetch_match_info(combinations):
 
     rslt = dict()
     for key in data[0].keys():
-       rslt[key] = pd.concat(list(x[key] for x in data),
+       tables = list(x[key] for x in data if len(x[key]) > 0)
+       rslt[key] = pd.concat(tables,
                              ignore_index=True)
 
     return rslt
