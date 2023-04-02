@@ -21,7 +21,7 @@ match_list = spl.fetch_matches(league, season)
 
 
 # %% Players
-spl.fetch_player_info('PlusLiga', 2022, 2104197)
+spl.fetch_player_info(league, season, 2104197)
 
 # Multiple at once
 lg = [league]
@@ -35,7 +35,7 @@ player_info = spl.batch_fetch_player_info(player_list)
 
 
 # %% Matches
-spl.fetch_match_info('PlusLiga', 2022, 1102401)
+spl.fetch_match_info(league, season, 1102401)
 
 # importlib.reload(spl)
 combs = match_list
@@ -45,4 +45,4 @@ stats = matches['stats']
 
 
 # %% Teams
-test = spl.fetch_team_info('PlusLiga', 2022, 30288)
+test = spl.fetch_team_info(league, season, 30288)

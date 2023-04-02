@@ -254,7 +254,11 @@ def fetch_team_info(league, season, ID):
     # Information -------------------------------------------------------------
     ## TODO: Finish this
     info = tree.cssselect('div.col-sm-12 > div.pagecontent > div.row')[0]
-    info = _parse_teaminfo_table(info)
+    # info = _parse_teaminfo_table(info)
+
+    team_name = tree.cssselect('div > h1')[0]
+    info = ids.copy()
+    info['TeamName'] = team_name.text
 
     # Return values -----------------------------------------------------------
     rslt = {'roster': players,
