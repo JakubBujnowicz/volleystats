@@ -1,5 +1,6 @@
 # User defined
 .directory
+data/*
 debug_script.py
 
 # Byte-compiled / optimized / DLL files

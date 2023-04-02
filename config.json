@@ -1,0 +1,11 @@
+{
+    "paths": {
+        "data_dir": "data",
+        "db_names": {
+            "polish": "polish.db"
+        }
+    },
+    "leagues": {
+        "polish": ["PlusLiga"]
+    }
+}

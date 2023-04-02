@@ -7,8 +7,8 @@ import pandas as pd
 import numpy as np
 
 spl = importlib.import_module('scraping.polish')
-st = importlib.import_module('stats')
 # importlib.reload(spl)
+st = importlib.import_module('stats')
 
 league = 'PlusLiga'
 season = 2022
@@ -21,7 +21,8 @@ match_list = spl.fetch_matches(league, season)
 
 
 # %% Players
-spl.fetch_player_info(league, season, 2104197)
+player_ex = spl.fetch_player_info(league, season, 2104197)
+player_ex
 
 # Multiple at once
 lg = [league]
@@ -30,19 +31,24 @@ sns = list(range(season - 1, season + 1))
 combs = pd.DataFrame(itertools.product(lg, sns, ids),
                      columns=['League', 'Season', 'PlayerID'])
 
-spl.batch_fetch_player_info(combs)
+player_info = spl.batch_fetch_player_info(combs)
 player_info = spl.batch_fetch_player_info(player_list)
 
 
 # %% Matches
-spl.fetch_match_info(league, season, 1102401)
+match_ex = spl.fetch_match_info(league, season, 1102401)
+match_ex
 
-# importlib.reload(spl)
-combs = match_list
-matches = spl.batch_fetch_match_info(combs)
-info = matches['information']
-stats = matches['stats']
+matches = spl.batch_fetch_match_info(match_list)
+m_info = matches['information']
+m_stats = matches['stats']
+m_results = matches['results']
 
 
 # %% Teams
-test = spl.fetch_team_info(league, season, 30288)
+team_ex = spl.fetch_team_info(league, season, 30288)
+team_ex
+
+teams = spl.batch_fetch_team_info(team_list)
+t_info = teams['information']
+t_roster = teams['roster']
