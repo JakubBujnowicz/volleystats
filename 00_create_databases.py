@@ -8,46 +8,40 @@ dbt = importlib.import_module('dbtools')
 # importlib.reload(dbt)
 
 
-# %% Common, predefined columns
+# %% Database objects
 db = dbt.get_engine('polish')
 meta = sql.MetaData()
-
-cols = {'league': sql.Column('League', sql.String, primary_key=True),
-        'season': sql.Column('Season', sql.Integer, primary_key=True),
-        'player': sql.Column('PlayerID', sql.Integer, primary_key=True),
-        'team': sql.Column('TeamID', sql.Integer, primary_key=True),
-        'match': sql.Column('MatchID', sql.Integer, primary_key=True)}
 
 
 # %% Define lists
 players_list = sql.Table(
     'players_list', meta,
-    cols['league'],
-    cols['season'],
-    cols['player'],
+    sql.Column('League', sql.String, primary_key=True),
+    sql.Column('Season', sql.Integer, primary_key=True),
+    sql.Column('PlayerID', sql.Integer, primary_key=True),
     extend_existing=True)
 
 teams_list = sql.Table(
     'teams_list', meta,
-    cols['league'],
-    cols['season'],
-    cols['team'],
+    sql.Column('League', sql.String, primary_key=True),
+    sql.Column('Season', sql.Integer, primary_key=True),
+    sql.Column('TeamID', sql.Integer, primary_key=True),
     extend_existing=True)
 
 matches_list = sql.Table(
     'matches_list', meta,
-    cols['league'],
-    cols['season'],
-    cols['match'],
+    sql.Column('League', sql.String, primary_key=True),
+    sql.Column('Season', sql.Integer, primary_key=True),
+    sql.Column('MatchID', sql.Integer, primary_key=True),
     extend_existing=True)
 
 
 # %% Define player tables
 players_info = sql.Table(
     'players_info', meta,
-    cols['league'],
-    cols['season'],
-    cols['player'],
+    sql.Column('League', sql.String, primary_key=True),
+    sql.Column('Season', sql.Integer, primary_key=True),
+    sql.Column('PlayerID', sql.Integer, primary_key=True),
     sql.Column('PlayerName', sql.String, nullable=False),
     sql.Column('TeamID', sql.Integer, nullable=False),
     sql.Column('DateOfBirth', sql.DateTime),
@@ -61,27 +55,27 @@ players_info = sql.Table(
 # %% Define team tables
 teams_info = sql.Table(
     'teams_info', meta,
-    cols['league'],
-    cols['season'],
-    cols['team'],
+    sql.Column('League', sql.String, primary_key=True),
+    sql.Column('Season', sql.Integer, primary_key=True),
+    sql.Column('TeamID', sql.Integer, primary_key=True),
     sql.Column('TeamName', sql.String, nullable=False),
     extend_existing=True)
 
 teams_roster = sql.Table(
     'teams_roster', meta,
-    cols['league'],
-    cols['season'],
-    cols['team'],
-    cols['player'],
+    sql.Column('League', sql.String, primary_key=True),
+    sql.Column('Season', sql.Integer, primary_key=True),
+    sql.Column('TeamID', sql.Integer, primary_key=True),
+    sql.Column('PlayerID', sql.Integer, primary_key=True),
     extend_existing=True)
 
 
 # %% Define match tables
 matches_info = sql.Table(
     'matches_info', meta,
-    cols['league'],
-    cols['season'],
-    cols['match'],
+    sql.Column('League', sql.String, primary_key=True),
+    sql.Column('Season', sql.Integer, primary_key=True),
+    sql.Column('MatchID', sql.Integer, primary_key=True),
     sql.Column('Home', sql.Integer, nullable=False),
     sql.Column('Away', sql.Integer, nullable=False),
     sql.Column('Date', sql.DateTime, nullable=False),
@@ -101,10 +95,10 @@ matches_info = sql.Table(
 
 matches_stats = sql.Table(
     'matches_stats', meta,
-    cols['league'],
-    cols['season'],
-    cols['match'],
-    cols['player'],
+    sql.Column('League', sql.String, primary_key=True),
+    sql.Column('Season', sql.Integer, primary_key=True),
+    sql.Column('MatchID', sql.Integer, primary_key=True),
+    sql.Column('PlayerID', sql.Integer, primary_key=True),
     sql.Column('SetI', sql.String),
     sql.Column('SetII', sql.String),
     sql.Column('SetIII', sql.String),
@@ -121,13 +115,24 @@ matches_stats = sql.Table(
     sql.Column('ReceptionTotal', sql.Integer),
     sql.Column('ReceptionErrors', sql.Integer),
     sql.Column('ReceptionPositive', sql.Integer),
-    sql.Column('ReceptionPerfect', sql.Intger),
+    sql.Column('ReceptionPerfect', sql.Integer),
     sql.Column('AttackTotal', sql.Integer),
     sql.Column('AttackBlocked', sql.Integer),
     sql.Column('AttackErrors', sql.Integer),
     sql.Column('AttackKills', sql.Integer),
     sql.Column('BlockPoints', sql.Integer),
     sql.Column('BlockAssists', sql.Integer),
+    extend_existing=True)
+
+matches_results = sql.Table(
+    'matches_results', meta,
+    sql.Column('League', sql.String, primary_key=True),
+    sql.Column('Season', sql.Integer, primary_key=True),
+    sql.Column('MatchID', sql.Integer, primary_key=True),
+    sql.Column('Set', sql.Integer, primary_key=True),
+    sql.Column('Time', sql.String),
+    sql.Column('Points', sql.String),
+    sql.Column('Result', sql.String),
     extend_existing=True)
 
 
