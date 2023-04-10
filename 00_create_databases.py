@@ -14,21 +14,21 @@ meta = sql.MetaData()
 
 
 # %% Define lists
-players_list = sql.Table(
+p_list = sql.Table(
     'players_list', meta,
     sql.Column('League', sql.String, primary_key=True),
     sql.Column('Season', sql.Integer, primary_key=True),
     sql.Column('PlayerID', sql.Integer, primary_key=True),
     extend_existing=True)
 
-teams_list = sql.Table(
+t_list = sql.Table(
     'teams_list', meta,
     sql.Column('League', sql.String, primary_key=True),
     sql.Column('Season', sql.Integer, primary_key=True),
     sql.Column('TeamID', sql.Integer, primary_key=True),
     extend_existing=True)
 
-matches_list = sql.Table(
+m_list = sql.Table(
     'matches_list', meta,
     sql.Column('League', sql.String, primary_key=True),
     sql.Column('Season', sql.Integer, primary_key=True),
@@ -37,7 +37,7 @@ matches_list = sql.Table(
 
 
 # %% Define player tables
-players_info = sql.Table(
+p_info = sql.Table(
     'players_info', meta,
     sql.Column('League', sql.String, primary_key=True),
     sql.Column('Season', sql.Integer, primary_key=True),
@@ -53,7 +53,7 @@ players_info = sql.Table(
 
 
 # %% Define team tables
-teams_info = sql.Table(
+t_info = sql.Table(
     'teams_info', meta,
     sql.Column('League', sql.String, primary_key=True),
     sql.Column('Season', sql.Integer, primary_key=True),
@@ -61,7 +61,7 @@ teams_info = sql.Table(
     sql.Column('TeamName', sql.String, nullable=False),
     extend_existing=True)
 
-teams_roster = sql.Table(
+t_roster = sql.Table(
     'teams_roster', meta,
     sql.Column('League', sql.String, primary_key=True),
     sql.Column('Season', sql.Integer, primary_key=True),
@@ -71,7 +71,7 @@ teams_roster = sql.Table(
 
 
 # %% Define match tables
-matches_info = sql.Table(
+m_info = sql.Table(
     'matches_info', meta,
     sql.Column('League', sql.String, primary_key=True),
     sql.Column('Season', sql.Integer, primary_key=True),
@@ -86,14 +86,15 @@ matches_info = sql.Table(
     sql.Column('Spectators', sql.Integer),
     sql.Column('FirstReferee', sql.String),
     sql.Column('SecondReferee', sql.String),
-    sql.Column('Comissioner', sql.String),
+    sql.Column('Commissioner', sql.String),
+    sql.Column('InspectorReferee', sql.String),
     sql.Column('Arena', sql.String),
     sql.Column('Address', sql.String),
     sql.Column('City', sql.String),
     sql.Column('ArenaSize', sql.Integer),
     extend_existing=True)
 
-matches_stats = sql.Table(
+m_stats = sql.Table(
     'matches_stats', meta,
     sql.Column('League', sql.String, primary_key=True),
     sql.Column('Season', sql.Integer, primary_key=True),
@@ -124,7 +125,7 @@ matches_stats = sql.Table(
     sql.Column('BlockAssists', sql.Integer),
     extend_existing=True)
 
-matches_results = sql.Table(
+m_results = sql.Table(
     'matches_results', meta,
     sql.Column('League', sql.String, primary_key=True),
     sql.Column('Season', sql.Integer, primary_key=True),
