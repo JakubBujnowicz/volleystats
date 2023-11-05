@@ -53,8 +53,14 @@ def translate_positions(strings):
     # TODO: The acronyms to be decided, it seems that there is no universally
     # accepted terminology
 
-    # Lower used due to website's inconsistency
-    rslt = list(pl2en[i[:-1].lower()] for i in strings)
+    rslt = list()
+    for string in strings:
+        if string is None:
+            rslt.append(None)
+        else:
+            # Lower used due to website's inconsis0tency
+            rslt.append(pl2en[string[:-1].lower()])
+
     return rslt
 
 
@@ -150,7 +156,11 @@ def fetch_player_info(league, season, ID):
     team = tree.cssselect('.playerteamname > a:nth-child(1)')
     name = tree.cssselect('.playername')[0].text
 
-    metrics = list(i.text.strip() for i in metrics)
+    metrics = list(i.text for i in metrics)
+    for i in range(len(metrics)):
+        if metrics[i] is not None:
+            metrics[i] = metrics[i].strip()
+
     metrics[0] = team[0].get('href')
 
     # Sometimes data is unavailable (especially Reach for liberos),
