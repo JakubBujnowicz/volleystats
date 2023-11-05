@@ -23,76 +23,62 @@ config = vsu.get_config()
 db = dbt.get_engine('polish')
 
 
-# %% Fetching
-league = config['leagues']['polish'][0]
-season = 2022
+# %% Getting all combinations for which the data should be fetched
+combs = dict()
+for league in config['leagues']['polish']:
+    seasons = np.arange(start=config['first_season'][league],
+                        stop=spl.current_season())
+    curr = pd.DataFrame(dict(Season=seasons))
+    curr.insert(loc=0, column='League', value=league)
+    combs[league] = curr
 
-players_list = spl.fetch_players(league, season)
-players_info = spl.batch_fetch_player_info(players_list)
-
-teams_list = spl.fetch_teams(league, season)
-teams_data = spl.batch_fetch_team_info(teams_list)
-teams_info = teams_data['information']
-teams_roster = teams_data['roster']
-
-matches_list = spl.fetch_matches(league, season)
-matches_data = spl.batch_fetch_match_info(matches_list)
-matches_info = matches_data['information']
-matches_stats = matches_data['stats']
-matches_results = matches_data['results']
+combs = pd.concat(combs, ignore_index=True)
 
 
-# %% Inserting into database
-players_list.to_sql(name='players_list',
-                    con=db,
-                    index=False,
-                    if_exists='append')
-# db.connect().execute('SELECT * FROM players_list').fetchall()
+# %% Fetch and upload data
+for i in range(len(combs.index)):
+    league = combs.League[i]
+    season = combs.Season[i]
 
-players_info.to_sql(name='players_info',
-                    con=db,
-                    index=False,
-                    if_exists='append')
-# db.connect().execute('SELECT * FROM players_info').fetchall()
+    print('Fetching data for {league}: {start}/{end}...'.format(
+        league=league,
+        start=season,
+        end=season + 1))
 
-teams_list.to_sql(name='teams_list',
-                  con=db,
-                  index=False,
-                  if_exists='append')
-# db.connect().execute('SELECT * FROM teams_list').fetchall()
+    tabs = dict()
+    tabs['matches_list'] = spl.fetch_matches(league, season)
+    matches_data = spl.batch_fetch_match_info(tabs['matches_list'])
+    tabs['matches_info'] = matches_data['information']
+    tabs['matches_stats'] = matches_data['stats']
+    tabs['matches_results'] = matches_data['results']
 
-teams_info.to_sql(name='teams_info',
-                  con=db,
-                  index=False,
-                  if_exists='append')
-# db.connect().execute('SELECT * FROM teams_info').fetchall()
+    tabs['teams_list'] = spl.fetch_teams(league, season)
+    teams_data = spl.batch_fetch_team_info(tabs['teams_list'])
+    tabs['teams_info'] = teams_data['information']
+    tabs['teams_roster'] = teams_data['roster']
 
-teams_roster.to_sql(name='teams_roster',
-                    con=db,
-                    index=False,
-                    if_exists='append')
-# db.connect().execute('SELECT * FROM teams_roster').fetchall()
+    tabs['players_list'] = spl.fetch_players(league, season)
+    # Since players come and go, the full players list should be extended
+    # by all players from statistics
+    plist_stats = tabs['matches_stats'][['League', 'Season', 'PlayerID']]
+    tabs['players_list'] = pd.concat([tabs['players_list'], plist_stats],
+                                     ignore_index=True).drop_duplicates()
+    tabs['players_list'] = tabs['players_list'].reset_index(drop=True)
 
-matches_list.to_sql(name='matches_list',
-                    con=db,
-                    index=False,
-                    if_exists='append')
-# db.connect().execute('SELECT * FROM matches_list').fetchall()
+    # Some matches with unnamed players in Stats pop-up
+    # PlayerID = 0 crashes players_info, as it redirects to all players list
+    tabs['players_list'] = tabs['players_list'].query('PlayerID > 0')
 
-matches_info.to_sql(name='matches_info',
-                    con=db,
-                    index=False,
-                    if_exists='append')
-# db.connect().execute('SELECT * FROM matches_info').fetchall()
+    tabs['players_info'] = spl.batch_fetch_player_info(tabs['players_list'])
 
-matches_stats.to_sql(name='matches_stats',
-                     con=db,
-                     index=False,
-                     if_exists='append')
-# db.connect().execute('SELECT * FROM matches_stats').fetchall()
+    for tab in tabs.keys():
+        vsu.add_timestamp(tabs[tab])
 
-matches_results.to_sql(name='matches_results',
-                       con=db,
-                       index=False,
-                       if_exists='append')
-# db.connect().execute('SELECT * FROM matches_results').fetchall()
+
+    # %% Inserting into database
+    for tab in tabs.keys():
+        tabs[tab].to_sql(name=tab,
+                         con=db,
+                         index=False,
+                         if_exists='append')
+        # db.connect().execute(sql.text('SELECT * FROM ' + tab)).fetchall()

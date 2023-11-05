@@ -9,7 +9,7 @@ dbt = importlib.import_module('dbtools')
 
 
 # %% Database objects
-db = dbt.get_engine('polish')
+db = dbt.get_engine('polish', clean=True)
 meta = sql.MetaData()
 
 
@@ -19,6 +19,7 @@ p_list = sql.Table(
     sql.Column('League', sql.String, primary_key=True),
     sql.Column('Season', sql.Integer, primary_key=True),
     sql.Column('PlayerID', sql.Integer, primary_key=True),
+    sql.Column('Timestamp', sql.DateTime, nullable=False),
     extend_existing=True)
 
 t_list = sql.Table(
@@ -26,6 +27,7 @@ t_list = sql.Table(
     sql.Column('League', sql.String, primary_key=True),
     sql.Column('Season', sql.Integer, primary_key=True),
     sql.Column('TeamID', sql.Integer, primary_key=True),
+    sql.Column('Timestamp', sql.DateTime, nullable=False),
     extend_existing=True)
 
 m_list = sql.Table(
@@ -33,6 +35,7 @@ m_list = sql.Table(
     sql.Column('League', sql.String, primary_key=True),
     sql.Column('Season', sql.Integer, primary_key=True),
     sql.Column('MatchID', sql.Integer, primary_key=True),
+    sql.Column('Timestamp', sql.DateTime, nullable=False),
     extend_existing=True)
 
 
@@ -45,10 +48,11 @@ p_info = sql.Table(
     sql.Column('PlayerName', sql.String, nullable=False),
     sql.Column('TeamID', sql.Integer, nullable=False),
     sql.Column('DateOfBirth', sql.DateTime),
-    sql.Column('Position', sql.String, nullable=False),
+    sql.Column('Position', sql.String),
     sql.Column('Height', sql.Integer),
     sql.Column('Weight', sql.Integer),
     sql.Column('Reach', sql.Integer),
+    sql.Column('Timestamp', sql.DateTime, nullable=False),
     extend_existing=True)
 
 
@@ -59,6 +63,7 @@ t_info = sql.Table(
     sql.Column('Season', sql.Integer, primary_key=True),
     sql.Column('TeamID', sql.Integer, primary_key=True),
     sql.Column('TeamName', sql.String, nullable=False),
+    sql.Column('Timestamp', sql.DateTime, nullable=False),
     extend_existing=True)
 
 t_roster = sql.Table(
@@ -67,6 +72,7 @@ t_roster = sql.Table(
     sql.Column('Season', sql.Integer, primary_key=True),
     sql.Column('TeamID', sql.Integer, primary_key=True),
     sql.Column('PlayerID', sql.Integer, primary_key=True),
+    sql.Column('Timestamp', sql.DateTime, nullable=False),
     extend_existing=True)
 
 
@@ -78,7 +84,7 @@ m_info = sql.Table(
     sql.Column('MatchID', sql.Integer, primary_key=True),
     sql.Column('Home', sql.Integer, nullable=False),
     sql.Column('Away', sql.Integer, nullable=False),
-    sql.Column('Date', sql.DateTime, nullable=False),
+    sql.Column('Date', sql.DateTime),
     sql.Column('Stage', sql.String),
     sql.Column('Round', sql.Integer),
     sql.Column('MatchNumber', sql.String),
@@ -92,6 +98,7 @@ m_info = sql.Table(
     sql.Column('Address', sql.String),
     sql.Column('City', sql.String),
     sql.Column('ArenaSize', sql.Integer),
+    sql.Column('Timestamp', sql.DateTime, nullable=False),
     extend_existing=True)
 
 m_stats = sql.Table(
@@ -115,6 +122,7 @@ m_stats = sql.Table(
     sql.Column('ServeSlashes', sql.Integer),
     sql.Column('ReceptionTotal', sql.Integer),
     sql.Column('ReceptionErrors', sql.Integer),
+    sql.Column('ReceptionNegative', sql.Integer),
     sql.Column('ReceptionPositive', sql.Integer),
     sql.Column('ReceptionPerfect', sql.Integer),
     sql.Column('AttackTotal', sql.Integer),
@@ -123,6 +131,7 @@ m_stats = sql.Table(
     sql.Column('AttackKills', sql.Integer),
     sql.Column('BlockPoints', sql.Integer),
     sql.Column('BlockAssists', sql.Integer),
+    sql.Column('Timestamp', sql.DateTime, nullable=False),
     extend_existing=True)
 
 m_results = sql.Table(
@@ -134,6 +143,7 @@ m_results = sql.Table(
     sql.Column('Time', sql.String),
     sql.Column('Points', sql.String),
     sql.Column('Result', sql.String),
+    sql.Column('Timestamp', sql.DateTime, nullable=False),
     extend_existing=True)
 
 

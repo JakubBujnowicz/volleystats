@@ -157,9 +157,15 @@ def fetch_player_info(league, season, ID):
     info = [league, season, ID]
     url = url_league(league, 'players/tour', season, 'id', ID)
 
+    # Sometimes a player's info page is broken, happens to Alan Sket (2100352)
+    # Results in too many redirects, return without info in this case
+    try:
+        req = requests.get(url)
+    except:
+        return []
+
     # Website redirects links for seasons a player did not take part in
     # to the newest season -- checked and empty list returned here
-    req = requests.get(url)
     if req.url != url:
         return []
 
