@@ -449,7 +449,7 @@ def _parse_details_table(tab):
              # 'MatchNumber': np.int32, (Matches are number using letters in playoffs)
              'MVP': np.int64,
              'Spectators': np.int32,
-             'ArenaSize': np.int32}
+             'ArenaSize': pd.Int32Dtype()} # There are sometimes NAs in old data
     rslt = rslt.astype({k: v for k, v in types.items() if k in rslt.columns})
 
     if 'Stage' in rslt.columns:
