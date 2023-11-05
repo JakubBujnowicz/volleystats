@@ -7,7 +7,7 @@ import re
 import numpy as np
 import pandas as pd
 import vsutils as vsu
-from datetime import datetime
+from datetime import datetime, date
 
 
 # %% Tools
@@ -103,6 +103,22 @@ def perc2count(perc, total):
     perc = np.array(perc, dtype=np.float64) / 100
 
     rslt = np.round(perc * total).astype(np.int32)
+    return rslt
+
+
+def current_season(cutoff = 7):
+    """
+    Infers current season (starting year, integer). Cutoff determines how long
+    a season runs into the next year, where it should be counted as starting
+    in the previous one (e.g. for cutoff of 7, the May of 2023 is counted
+    as season 2022/2023, hence 2022 should be returned).
+    """
+
+    today = date.today()
+    rslt = today.year
+    if today.month <= cutoff:
+        rslt -= 1
+
     return rslt
 
 
