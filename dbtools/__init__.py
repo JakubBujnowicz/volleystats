@@ -13,7 +13,7 @@ def get_db_path(db_name):
         name=config['paths']['db_names'][db_name])
     return db_path
 
-def get_engine(db_name, echo=True, clean=False):
+def get_engine(db_name, echo=False, clean=False):
     db_path = get_db_path(db_name)
     sqlite_path = 'sqlite+pysqlite:///' + db_path
 
