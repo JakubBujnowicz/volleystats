@@ -19,6 +19,7 @@ p_list = sql.Table(
     sql.Column('League', sql.String, primary_key=True),
     sql.Column('Season', sql.Integer, primary_key=True),
     sql.Column('PlayerID', sql.Integer, primary_key=True),
+    sql.Column('Hash', sql.String, primary_key=True),
     sql.Column('Timestamp', sql.DateTime, nullable=False),
     extend_existing=True)
 
@@ -27,6 +28,7 @@ t_list = sql.Table(
     sql.Column('League', sql.String, primary_key=True),
     sql.Column('Season', sql.Integer, primary_key=True),
     sql.Column('TeamID', sql.Integer, primary_key=True),
+    sql.Column('Hash', sql.String, primary_key=True),
     sql.Column('Timestamp', sql.DateTime, nullable=False),
     extend_existing=True)
 
@@ -35,6 +37,7 @@ m_list = sql.Table(
     sql.Column('League', sql.String, primary_key=True),
     sql.Column('Season', sql.Integer, primary_key=True),
     sql.Column('MatchID', sql.Integer, primary_key=True),
+    sql.Column('Hash', sql.String, primary_key=True),
     sql.Column('Timestamp', sql.DateTime, nullable=False),
     extend_existing=True)
 
@@ -52,6 +55,7 @@ p_info = sql.Table(
     sql.Column('Height', sql.Integer),
     sql.Column('Weight', sql.Integer),
     sql.Column('Reach', sql.Integer),
+    sql.Column('Hash', sql.String, primary_key=True),
     sql.Column('Timestamp', sql.DateTime, nullable=False),
     extend_existing=True)
 
@@ -63,6 +67,7 @@ t_info = sql.Table(
     sql.Column('Season', sql.Integer, primary_key=True),
     sql.Column('TeamID', sql.Integer, primary_key=True),
     sql.Column('TeamName', sql.String, nullable=False),
+    sql.Column('Hash', sql.String, primary_key=True),
     sql.Column('Timestamp', sql.DateTime, nullable=False),
     extend_existing=True)
 
@@ -72,6 +77,7 @@ t_roster = sql.Table(
     sql.Column('Season', sql.Integer, primary_key=True),
     sql.Column('TeamID', sql.Integer, primary_key=True),
     sql.Column('PlayerID', sql.Integer, primary_key=True),
+    sql.Column('Hash', sql.String, primary_key=True),
     sql.Column('Timestamp', sql.DateTime, nullable=False),
     extend_existing=True)
 
@@ -98,6 +104,7 @@ m_info = sql.Table(
     sql.Column('Address', sql.String),
     sql.Column('City', sql.String),
     sql.Column('ArenaSize', sql.Integer),
+    sql.Column('Hash', sql.String, primary_key=True),
     sql.Column('Timestamp', sql.DateTime, nullable=False),
     extend_existing=True)
 
@@ -131,6 +138,7 @@ m_stats = sql.Table(
     sql.Column('AttackKills', sql.Integer),
     sql.Column('BlockPoints', sql.Integer),
     sql.Column('BlockAssists', sql.Integer),
+    sql.Column('Hash', sql.String, primary_key=True),
     sql.Column('Timestamp', sql.DateTime, nullable=False),
     extend_existing=True)
 
@@ -143,6 +151,7 @@ m_results = sql.Table(
     sql.Column('Time', sql.String),
     sql.Column('Points', sql.String),
     sql.Column('Result', sql.String),
+    sql.Column('Hash', sql.String, primary_key=True),
     sql.Column('Timestamp', sql.DateTime, nullable=False),
     extend_existing=True)
 

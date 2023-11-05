@@ -603,3 +603,34 @@ def batch_fetch_match_info(combinations):
            rslt[key] = list()
 
     return rslt
+
+
+# %% All
+def fetch_all(league, season):
+    tabs = dict()
+    tabs['matches_list'] = fetch_matches(league, season)
+    matches_data = batch_fetch_match_info(tabs['matches_list'])
+    tabs['matches_info'] = matches_data['information']
+    tabs['matches_stats'] = matches_data['stats']
+    tabs['matches_results'] = matches_data['results']
+
+    tabs['teams_list'] = fetch_teams(league, season)
+    teams_data = batch_fetch_team_info(tabs['teams_list'])
+    tabs['teams_info'] = teams_data['information']
+    tabs['teams_roster'] = teams_data['roster']
+
+    tabs['players_list'] = fetch_players(league, season)
+    # Since players come and go, the full players list should be extended
+    # by all players from statistics
+    plist_stats = tabs['matches_stats'][['League', 'Season', 'PlayerID']]
+    tabs['players_list'] = pd.concat([tabs['players_list'], plist_stats],
+                                     ignore_index=True).drop_duplicates()
+    tabs['players_list'] = tabs['players_list'].reset_index(drop=True)
+
+    # Some matches with unnamed players in Stats pop-up
+    # PlayerID = 0 crashes players_info, as it redirects to all players list
+    tabs['players_list'] = tabs['players_list'].query('PlayerID > 0')
+
+    tabs['players_info'] = batch_fetch_player_info(tabs['players_list'])
+
+    return tabs

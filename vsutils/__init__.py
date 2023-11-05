@@ -4,6 +4,7 @@
 import json
 import pandas as pd
 import datetime as dttm
+import hashlib
 
 def get_config():
     with open('config.json', 'r') as read_file:
@@ -27,3 +28,18 @@ def add_timestamp(tab):
     tab.insert(loc=tab.shape[1],
                column='Timestamp',
                value=stamp)
+
+
+def create_hash(values):
+    strings = list(str(x) for x in values)
+    one_string = ' '.join(strings)
+    enc_string = one_string.encode()
+    rslt = hashlib.md5(enc_string).hexdigest()
+    return rslt
+
+
+def add_hash(tab):
+    hashes = tab.apply(create_hash, axis=1)
+    tab.insert(loc=tab.shape[1],
+               column='Hash',
+               value=hashes)

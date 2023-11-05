@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-## TODO: To be split into two codes: one inserting historical data and second
-## inserting data from the current season. At the moment only current season
-## is taken into account.
-
 import importlib
 import sqlalchemy as sql
 import pandas as pd
@@ -45,33 +41,10 @@ for i in range(len(combs.index)):
         start=season,
         end=season + 1))
 
-    tabs = dict()
-    tabs['matches_list'] = spl.fetch_matches(league, season)
-    matches_data = spl.batch_fetch_match_info(tabs['matches_list'])
-    tabs['matches_info'] = matches_data['information']
-    tabs['matches_stats'] = matches_data['stats']
-    tabs['matches_results'] = matches_data['results']
-
-    tabs['teams_list'] = spl.fetch_teams(league, season)
-    teams_data = spl.batch_fetch_team_info(tabs['teams_list'])
-    tabs['teams_info'] = teams_data['information']
-    tabs['teams_roster'] = teams_data['roster']
-
-    tabs['players_list'] = spl.fetch_players(league, season)
-    # Since players come and go, the full players list should be extended
-    # by all players from statistics
-    plist_stats = tabs['matches_stats'][['League', 'Season', 'PlayerID']]
-    tabs['players_list'] = pd.concat([tabs['players_list'], plist_stats],
-                                     ignore_index=True).drop_duplicates()
-    tabs['players_list'] = tabs['players_list'].reset_index(drop=True)
-
-    # Some matches with unnamed players in Stats pop-up
-    # PlayerID = 0 crashes players_info, as it redirects to all players list
-    tabs['players_list'] = tabs['players_list'].query('PlayerID > 0')
-
-    tabs['players_info'] = spl.batch_fetch_player_info(tabs['players_list'])
+    tabs = spl.fetch_all(league, season)
 
     for tab in tabs.keys():
+        vsu.add_hash(tabs[tab])
         vsu.add_timestamp(tabs[tab])
 
 
