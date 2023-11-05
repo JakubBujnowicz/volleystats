@@ -502,7 +502,6 @@ def _parse_results_table(tab):
 def fetch_match_info(league, season, ID):
     # TODO: Finish, consider what should be returned (teams, result, time,
     # place, something else?)
-
     url = url_league(league, 'games/id', ID, 'tour', season)
 
     req = requests.get(url)
@@ -534,8 +533,10 @@ def fetch_match_info(league, season, ID):
     ## TODO: Make this more robust
     if len(date) == (10 + 2 + 5):
         date = datetime.strptime(date, '%d.%m.%Y, %H:%M')
-    else:
+    elif len(date) == 10:
         date = datetime.strptime(date, '%d.%m.%Y')
+    else:
+        date = None
     date = np.datetime64(date)
 
     details = tree.cssselect('div.col-sm-6.col-md-5 > table')
@@ -588,7 +589,11 @@ def batch_fetch_match_info(combinations):
     rslt = dict()
     for key in data[0].keys():
        tables = list(x[key] for x in data if len(x[key]) > 0)
-       rslt[key] = pd.concat(tables,
-                             ignore_index=True)
+
+       if len(tables) > 0:
+           rslt[key] = pd.concat(tables,
+                                 ignore_index=True)
+       else:
+           rslt[key] = list()
 
     return rslt
