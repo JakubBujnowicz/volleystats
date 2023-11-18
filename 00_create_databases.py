@@ -92,7 +92,7 @@ m_info = sql.Table(
     sql.Column('Away', sql.Integer, nullable=False),
     sql.Column('Date', sql.DateTime),
     sql.Column('Stage', sql.String),
-    sql.Column('Round', sql.Integer),
+    sql.Column('Round', sql.String),
     sql.Column('MatchNumber', sql.String),
     sql.Column('MVP', sql.Integer),
     sql.Column('Spectators', sql.Integer),
