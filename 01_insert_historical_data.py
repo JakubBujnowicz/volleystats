@@ -50,8 +50,11 @@ for i in range(len(combs.index)):
 
     # %% Inserting into database
     for tab in tabs.keys():
-        tabs[tab].to_sql(name=tab,
-                         con=db,
-                         index=False,
-                         if_exists='append')
+        rows_aff = tabs[tab].to_sql(name=tab,
+                                    con=db,
+                                    index=False,
+                                    if_exists='append')
+        print("Inserted {n} rows into '{tab}'...".format(
+              n=rows_aff,
+              tab=tab))
         # db.connect().execute(sql.text('SELECT * FROM ' + tab)).fetchall()

@@ -50,8 +50,11 @@ for league in config['leagues']['polish']:
         ins_tab = ins_tab[~ins_tab.Hash.isin(curr_hashes)]
 
         if ins_tab.shape[0] > 0:
-            ins_tab.to_sql(name=tab,
-                           con=db,
-                           index=False,
-                           if_exists='append')
+            rows_aff = ins_tab.to_sql(name=tab,
+                                      con=db,
+                                      index=False,
+                                      if_exists='append')
+            print("Inserted {n} rows into '{tab}'...".format(
+                n=rows_aff,
+                tab=tab))
             # db.connect().execute(sql.text('SELECT * FROM ' + tab)).fetchall()
