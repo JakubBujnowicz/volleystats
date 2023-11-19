@@ -18,10 +18,20 @@ def url_league(league, *args):
 
     sites = {'PlusLiga': 'https://www.plusliga.pl',
              'Tauron Liga': 'https://www.tauronliga.pl',
-             'Tauron 1. Liga': 'https://tauron1liga.pl'}
+             'Tauron 1. Liga': 'https://www.tauron1liga.pl'}
     rslt = [sites[league], *args]
     rslt = '/'.join(str(x) for x in rslt) + '.html'
     return rslt
+
+
+def make_request(url):
+    """
+    Makes a request with a proper encoding.
+    """
+
+    req = requests.get(url)
+    req.encoding = 'Latin-2'
+    return req
 
 
 def extract_ids(strings):
@@ -131,9 +141,8 @@ def fetch_players(league, season):
     """
 
     url = url_league(league, 'players/tour', season)
-    req = requests.get(url)
-    content = req.content
-    tree = html.fromstring(content)
+    req = make_request(url)
+    tree = html.fromstring(req.text)
 
     links = tree.cssselect('div.caption > h3 > a')
     ids = extract_ids(list(x.get('href') for x in links))
@@ -160,7 +169,7 @@ def fetch_player_info(league, season, ID):
     # Sometimes a player's info page is broken, happens to Alan Sket (2100352)
     # Results in too many redirects, return without info in this case
     try:
-        req = requests.get(url)
+        req = make_request(url)
     except:
         return []
 
@@ -169,8 +178,7 @@ def fetch_player_info(league, season, ID):
     if req.url != url:
         return []
 
-    content = req.content
-    tree = html.fromstring(content)
+    tree = html.fromstring(req.text)
     selector = ' > '.join(['div.pagecontent:nth-child(1)',
                            'div:nth-child(1)',
                            'div:nth-child(1) span'])
@@ -243,9 +251,8 @@ def fetch_teams(league, season):
     """
 
     url = url_league(league, 'teams/tour', season)
-    req = requests.get(url)
-    content = req.content
-    tree = html.fromstring(content)
+    req = make_request(url)
+    tree = html.fromstring(req.text)
 
     links = tree.cssselect('div.thumbnail.teamlist > a')
     ids = extract_ids(list(x.get('href') for x in links))
@@ -270,9 +277,8 @@ def fetch_team_info(league, season, ID):
     url = url_league(league, 'teams/id', ID, 'tour', season)
     # TODO: Finish, consider what should be returned (name, roster, something else?)
 
-    req = requests.get(url)
-    content = req.content
-    tree = html.fromstring(content)
+    req = make_request(url)
+    tree = html.fromstring(req.text)
 
     ids = pd.DataFrame([{'League': league,
                          'Season': season,
@@ -336,9 +342,8 @@ def fetch_matches(league, season):
     """
 
     url = url_league(league, 'games/tour', season)
-    req = requests.get(url)
-    content = req.content
-    tree = html.fromstring(content)
+    req = make_request(url)
+    tree = html.fromstring(req.text)
 
     links = tree.cssselect('div.gameresult.clickable')
     ids = extract_ids(list(x.get('onclick') for x in links))
@@ -510,9 +515,8 @@ def fetch_match_info(league, season, ID):
     # place, something else?)
     url = url_league(league, 'games/id', ID, 'tour', season)
 
-    req = requests.get(url)
-    content = req.content
-    tree = html.fromstring(content)
+    req = make_request(url)
+    tree = html.fromstring(req.text)
 
     ids = pd.DataFrame([{'League': league,
                          'Season': season,
