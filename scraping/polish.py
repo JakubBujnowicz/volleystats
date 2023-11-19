@@ -547,7 +547,7 @@ def fetch_match_info(league, season, ID):
         date = datetime.strptime(date, '%d.%m.%Y')
     else:
         date = None
-    date = np.datetime64(date)
+    date = np.datetime64(date, 's')
 
     details = tree.cssselect('div.col-sm-6.col-md-5 > table')
     place = tree.cssselect('div.pagecontent > table.right-left.spacced')
