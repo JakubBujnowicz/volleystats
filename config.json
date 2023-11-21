@@ -6,9 +6,11 @@
         }
     },
     "leagues": {
-        "polish": ["PlusLiga"]
+        "polish": ["PlusLiga", "Tauron Liga", "Tauron 1. Liga"]
     },
     "first_season": {
-        "PlusLiga": 2012
+        "PlusLiga": 2008,
+        "Tauron Liga": 2008,
+        "Tauron 1. Liga": 2018
     }
 }
