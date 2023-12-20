@@ -113,6 +113,7 @@ m_stats = sql.Table(
     sql.Column('League', sql.String, primary_key=True),
     sql.Column('Season', sql.Integer, primary_key=True),
     sql.Column('MatchID', sql.Integer, primary_key=True),
+    sql.Column('TeamID', sql.Integer),
     sql.Column('PlayerID', sql.Integer, primary_key=True),
     sql.Column('SetI', sql.String),
     sql.Column('SetII', sql.String),

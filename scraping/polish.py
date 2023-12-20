@@ -482,7 +482,7 @@ def _parse_details_table(tab):
         rslt['MVP'] = extract_ids([tab.cssselect('a')[0].get('href')])
 
     rslt = pd.DataFrame([rslt])
-    types = {'Round': np.int32,
+    types = {# 'Round': np.int32,
              # 'MatchNumber': np.int32, (Matches are number using letters in playoffs)
              'MVP': np.int64,
              'Spectators': np.int32,
@@ -563,9 +563,17 @@ def fetch_match_info(league, season, ID):
     # Statistics --------------------------------------------------------------
     stat_tabs = tree.cssselect('table.rs-standings-table')
 
-    if len(stat_tabs) > 0:
-        stats = pd.concat(list(_parse_stats_table(tab, season=season)
-                               for tab in stat_tabs),
+    if len(stat_tabs) == 2:
+        stats_home = _parse_stats_table(stat_tabs[0],
+                                        season=season)
+        stats_home = vsu.df_colattach1(details['Home'].rename('TeamID'),
+                                       stats_home)
+        stats_away = _parse_stats_table(stat_tabs[1],
+                                        season=season)
+        stats_away = vsu.df_colattach1(details['Away'].rename('TeamID'),
+                                       stats_away)
+
+        stats = pd.concat([stats_home, stats_away],
                           ignore_index=True)
         stats = vsu.df_colattach1(ids, stats)
     else:
