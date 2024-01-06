@@ -498,15 +498,17 @@ def _parse_details_table(tab):
 def _parse_results_table(tab):
     rows = tab.cssselect('tr')
 
-    # Discard first (headers) and last (total)
-    rows = rows[1:(len(rows) - 1)]
+    # Discard first (headers)
+    rows = rows[1:]
     values = list([x.text for x in row] for row in rows)
     rslt = pd.DataFrame(values, columns=['Set', 'Time', 'Points', 'Result'])
+    rslt = rslt[rslt.Set != 'Łącznie']
 
     # Fix the set number
     n = rslt.shape[0]
     rslt.Set = np.arange(n) + 1
 
+    rslt = rslt.reset_index(drop=True)
     return rslt
 
 
