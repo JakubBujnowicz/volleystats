@@ -11,7 +11,7 @@ spl = importlib.import_module('scraping.polish')
 st = importlib.import_module('stats')
 
 league = 'PlusLiga'
-season = 2022
+season = 2017
 
 
 # %% Lists
@@ -21,7 +21,7 @@ match_list = spl.fetch_matches(league, season)
 
 
 # %% Players
-player_ex = spl.fetch_player_info(league, season, 2104197)
+player_ex = spl.fetch_player_info(league, season, 164)
 player_ex
 
 # Multiple at once
@@ -36,7 +36,7 @@ player_info = spl.batch_fetch_player_info(player_list)
 
 
 # %% Matches
-match_ex = spl.fetch_match_info(league, season, 1102401)
+match_ex = spl.fetch_match_info(league, season, 1103211)
 match_ex
 
 matches = spl.batch_fetch_match_info(match_list)

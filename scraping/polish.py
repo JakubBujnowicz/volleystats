@@ -398,7 +398,7 @@ def _parse_stats_table(tab, season):
                       'ServeTotal', 'ServeErrors', 'ServeAces', 'ServeEff',
                       'ReceptionTotal', 'ReceptionErrors',
                       'ReceptionPosPerc', 'ReceptionPerfPerc',
-                      'AttackTotal', 'AttackBlocked', 'AttackErrors',
+                      'AttackTotal', 'AttackErrors', 'AttackBlocked',
                       'AttackKills', 'AttackKillPerc', 'AttackEff',
                       'BlockPoints', 'BlockAssists']
 
