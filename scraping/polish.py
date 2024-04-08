@@ -534,7 +534,7 @@ def fetch_match_info(league, season, ID):
     # If there was no ID to extract (i.e. it is not yet known who will play),
     # provide fake IDs
     ## TODO: Make this more robust
-    if len(teams) == 0:
+    if len(teams) != 2:
         teams = np.array([0, 0], dtype=np.int64)
 
     teams = pd.DataFrame(teams.reshape(1, 2),
